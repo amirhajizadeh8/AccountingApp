@@ -1,0 +1,17 @@
+# Virtual env
+venv/
+
+# Byte-code & cache
+__pycache__/
+*.py[cod]
+
+# Local database file
+accounting.db
+
+# Build outputs
+build/
+dist/
+
+# IDE settings
+.vscode/
+.idea/
