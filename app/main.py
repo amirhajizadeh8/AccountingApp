@@ -1,36 +1,68 @@
+#Entry‑point of the AccountingApp.
+
 import sys
-import sqlite3
-from PySide2.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from pathlib import Path
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QFontDatabase, QFont
+from PySide2.QtWidgets import QApplication
+from PySide2.QtCore import QFile, QTextStream
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("برنامه حسابداری ساده")
-        self.setGeometry(100, 100, 600, 400)
+# ────────────────────────────────────────────────────────────────────────────
+# local import – Main UI shell (tabs)
+# path: app/ui/main_window.py   (the file you already have in Canvas)
+# ────────────────────────────────────────────────────────────────────────────
+from app.ui.main_window import MainWindow  # << corrected absolute import
 
-        self.conn = sqlite3.connect("accounting.db")
+# ---------------------------------------------------------------------------
+# helper: load custom font (Vazir.ttf) if exists
+# ---------------------------------------------------------------------------
 
-        self.table_widget = QTableWidget()
-        self.setCentralWidget(self.table_widget)
+def _load_vazir_font(app: QApplication) -> None:
+    """Load Vazir.ttf from resources/fonts and apply it globally."""
+    font_path = (
+        Path(__file__).resolve().parent.parent / "resources" / "fonts" / "Vazir.ttf"
+    )
+    if font_path.exists():
+        fid = QFontDatabase.addApplicationFont(str(font_path))
+        if fid != -1:
+            fam = QFontDatabase.applicationFontFamilies(fid)[0]
+            app.setFont(QFont(fam, 11))
 
-        self.load_data()
 
-    def load_data(self):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT id, date, description, amount FROM transactions")
-        rows = cursor.fetchall()
+# ---------------------------------------------------------------------------
+# helper: apply minimal QSS purple/white theme (optional)
+# ---------------------------------------------------------------------------
 
-        self.table_widget.setRowCount(len(rows))
-        self.table_widget.setColumnCount(4)
-        self.table_widget.setHorizontalHeaderLabels(["شناسه", "تاریخ", "شرح", "مبلغ"])
+def apply_stylesheet(app):
+    style_file = QFile("resources/styles/style.qss")
+    if style_file.open(QFile.ReadOnly | QFile.Text):
+        stream = QTextStream(style_file)
+        app.setStyleSheet(stream.readAll())
 
-        for row_idx, row_data in enumerate(rows):
-            for col_idx, value in enumerate(row_data):
-                item = QTableWidgetItem(str(value))
-                self.table_widget.setItem(row_idx, col_idx, item)
+# ---------------------------------------------------------------------------
+# main entry
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    """Initialise QApplication, apply styling, launch MainWindow."""
+    app = QApplication(sys.argv)
+    apply_stylesheet(app)
+    ...
+
+
+    # RTL for whole UI
+    app.setLayoutDirection(Qt.RightToLeft)
+
+    # font + style
+    _load_vazir_font(app)
+
+
+    # show main window
+    win = MainWindow()
+    win.show()
+
+    sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    main()
